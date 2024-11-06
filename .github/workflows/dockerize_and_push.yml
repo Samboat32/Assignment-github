@@ -6,6 +6,7 @@ on:
       - main  # Trigger this workflow on push to main branch
 
 jobs:
+  name: samboat
   build-and-deploy:
     runs-on: ubuntu-latest
 
