@@ -1,0 +1,48 @@
+name: Dockerize and Push to ECR
+
+on:
+  push:
+    branches:
+      - main  # Trigger this workflow on push to main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # Step 3: Build the Docker image
+      - name: Build Docker image
+        env:
+          IMAGE_NAME: my-resume-app
+        run: |
+          docker build -t $IMAGE_NAME .
+
+      # Step 4: Tag the Docker image
+      - name: Tag Docker image
+        env:
+          IMAGE_NAME: my-resume-app
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          docker tag $IMAGE_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:latest
+
+      # Step 5: Push the Docker image to Amazon ECR
+      - name: Push Docker image to Amazon ECR
+        env:
+          IMAGE_NAME: my-resume-app
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:latest
